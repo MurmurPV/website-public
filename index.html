@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MurmurPV — Intelligent Drug Safety</title>
+  <meta name="description" content="AI-powered adverse event reporting for patients and physicians. MurmurPV guides patients through a structured drug safety interview and delivers regulation-ready records to their care team." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy:    { DEFAULT: '#1B2B4B', light: '#243660', dark: '#131f38' },
+            teal:    { DEFAULT: '#3BBFB8', light: '#56cec8', dark: '#2aa8a1' },
+            slate:   { soft: '#f4f6f9' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Georgia', 'serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: smooth; }
+
+    /* Logo wordmark */
+    .logo-murmur { color: #1B2B4B; }
+    .logo-pv     { color: #3BBFB8; }
+
+    /* Hairline divider */
+    .hairline { border-top: 1px solid #e2e8f0; }
+
+    /* Form states */
+    input[type="email"]:focus { outline: none; box-shadow: 0 0 0 3px rgba(59,191,184,0.25); }
+
+    /* Thank-you panel — hidden by default */
+    #thankyou { display: none; }
+
+    /* Subtle bird silhouette background — pure CSS, no stock photos */
+    .hero-bg {
+      background-color: #f4f6f9;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400' opacity='0.045'%3E%3Cpath fill='%231B2B4B' d='M680 60 Q690 50 700 60 Q695 52 710 55 M650 80 Q662 68 674 78 Q668 70 682 72 M710 40 Q718 32 726 40 Q722 34 732 36 M730 75 Q738 66 747 75 Q743 68 753 70 M700 95 Q706 88 714 95 Q710 89 718 91'/%3E%3Cpath fill='%231B2B4B' d='M620 120 Q680 80 720 110 Q700 88 740 98'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: 500px;
+    }
+
+    /* Audience tab active state */
+    .tab-btn.active { background-color: #1B2B4B; color: white; }
+    .tab-btn        { transition: all 0.2s ease; }
+
+    /* Pain card hover */
+    .pain-card:hover { border-color: #3BBFB8; }
+  </style>
+</head>
+
+<body class="font-sans text-navy antialiased">
+
+  <!-- ═══════════════════════════════════════
+       NAV
+  ═══════════════════════════════════════ -->
+  <nav class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <a href="#" class="flex items-center">
+      <img src="assets/logo.png" alt="MurmurPV — Intelligent Drug Safety" class="h-16 w-auto" />
+    </a>
+    <a href="#waitlist"
+       class="bg-navy text-white text-sm font-medium px-4 py-2 rounded hover:bg-navy-light transition-colors">
+      Request Early Access
+    </a>
+  </nav>
+
+
+  <!-- ═══════════════════════════════════════
+       HERO ZONE
+  ═══════════════════════════════════════ -->
+  <section class="hero-bg px-6 py-20 md:py-28" id="top">
+    <div class="max-w-3xl mx-auto">
+
+      <p class="text-teal font-medium text-sm uppercase tracking-widest mb-4">
+        Intelligent Drug Safety · Pre-Launch Waitlist
+      </p>
+
+      <h1 class="text-4xl md:text-5xl font-bold text-navy leading-tight mb-6">
+        Adverse event reporting that works for patients — and delivers for physicians.
+      </h1>
+
+      <p class="text-lg text-gray-600 leading-relaxed mb-10 max-w-2xl">
+        MurmurPV guides patients through a structured drug safety interview — by voice or text — and produces a regulation-ready MedWatch record, automatically. No forms. No jargon. No dropped signals.
+      </p>
+
+      <!-- Waitlist form — hero -->
+      <div id="hero-form">
+        <form name="waitlist" method="POST" data-netlify="true" onsubmit="submitWaitlist(event, 'hero')" class="flex flex-col sm:flex-row gap-3 max-w-lg">
+          <input type="hidden" name="form-name" value="waitlist" />
+          <input type="hidden" name="source" value="hero" />
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="your@email.com"
+            class="flex-1 px-4 py-3 border border-gray-300 rounded bg-white text-navy placeholder-gray-400 text-sm"
+          />
+          <button
+            type="submit"
+            class="bg-teal hover:bg-teal-dark text-white font-semibold px-6 py-3 rounded transition-colors whitespace-nowrap text-sm">
+            Join the Priority Waitlist
+          </button>
+        </form>
+        <p class="text-xs text-gray-400 mt-3">No spam. No phone number. One email to get you on the list.</p>
+      </div>
+
+      <!-- Thank-you state -->
+      <div id="thankyou" class="bg-white border border-teal rounded-lg p-6 max-w-lg">
+        <p class="text-navy font-semibold mb-1">You're on the list. ✓</p>
+        <p class="text-gray-600 text-sm mb-4">One quick optional question while you're here:</p>
+        <p class="text-sm font-medium text-navy mb-3">What best describes you?</p>
+        <div class="flex flex-col gap-2">
+          <button onclick="selectRole('patient')"    class="role-btn text-left px-4 py-2 border border-gray-200 rounded text-sm hover:border-teal hover:bg-slate-soft transition-colors">I'm a patient or caregiver</button>
+          <button onclick="selectRole('physician')"  class="role-btn text-left px-4 py-2 border border-gray-200 rounded text-sm hover:border-teal hover:bg-slate-soft transition-colors">I'm a physician or clinical pharmacist</button>
+          <button onclick="selectRole('pv')"         class="role-btn text-left px-4 py-2 border border-gray-200 rounded text-sm hover:border-teal hover:bg-slate-soft transition-colors">I work in pharmacovigilance or drug safety</button>
+          <button onclick="selectRole('other')"      class="role-btn text-left px-4 py-2 border border-gray-200 rounded text-sm hover:border-teal hover:bg-slate-soft transition-colors">Something else</button>
+        </div>
+        <p id="role-thanks" class="text-teal text-sm font-medium mt-3 hidden">Thanks — that helps us prioritize. We'll be in touch.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       THE FRICTION — Dual audience tabs
+  ═══════════════════════════════════════ -->
+  <section class="bg-white px-6 py-20" id="friction">
+    <div class="max-w-3xl mx-auto">
+
+      <p class="text-sm text-teal font-medium uppercase tracking-widest mb-3">The Problem</p>
+      <h2 class="text-3xl font-bold text-navy mb-4">The current reporting pipeline is broken at both ends.</h2>
+      <p class="text-gray-500 mb-10">
+        The FDA receives fewer than 1% of adverse drug events that occur. The bottleneck isn't awareness — it's friction.
+      </p>
+
+      <!-- Audience toggle -->
+      <div class="flex gap-2 mb-10 bg-slate-soft p-1 rounded-lg w-fit">
+        <button id="tab-patient"
+          class="tab-btn active text-sm font-medium px-5 py-2 rounded-md"
+          onclick="switchTab('patient')">For Patients</button>
+        <button id="tab-physician"
+          class="tab-btn text-sm font-medium px-5 py-2 rounded-md text-navy"
+          onclick="switchTab('physician')">For Physicians</button>
+      </div>
+
+      <!-- Patient pain -->
+      <div id="panel-patient">
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="pain-card border border-gray-200 rounded-lg p-6 transition-colors">
+            <div class="text-2xl mb-3">📋</div>
+            <h3 class="font-semibold text-navy mb-2">Forms designed for regulators, not people</h3>
+            <p class="text-sm text-gray-500 leading-relaxed">MedWatch asks for NDC numbers, lot codes, and route of administration. Most patients can't answer these without abandoning the report entirely.</p>
+          </div>
+          <div class="pain-card border border-gray-200 rounded-lg p-6 transition-colors">
+            <div class="text-2xl mb-3">🔇</div>
+            <h3 class="font-semibold text-navy mb-2">Experiences go unreported — and signals are missed</h3>
+            <p class="text-sm text-gray-500 leading-relaxed">When reporting is too hard, patients give up. That means the FDA never learns about patterns that could protect the next person taking the same drug.</p>
+          </div>
+          <div class="pain-card border border-gray-200 rounded-lg p-6 transition-colors">
+            <div class="text-2xl mb-3">🧩</div>
+            <h3 class="font-semibold text-navy mb-2">No bridge to the care team</h3>
+            <p class="text-sm text-gray-500 leading-relaxed">Even when patients do report, there's no structured handoff to the physician. The information exists in a PDF and goes nowhere useful.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Physician pain -->
+      <div id="panel-physician" class="hidden">
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="pain-card border border-gray-200 rounded-lg p-6 transition-colors">
+            <div class="text-2xl mb-3">⏱️</div>
+            <h3 class="font-semibold text-navy mb-2">Manual case processing is a time sink</h3>
+            <p class="text-sm text-gray-500 leading-relaxed">PV teams spend hours extracting structured data from unstructured narratives, cleaning inconsistent inputs, and filling out ICSRs by hand.</p>
+          </div>
+          <div class="pain-card border border-gray-200 rounded-lg p-6 transition-colors">
+            <div class="text-2xl mb-3">🗂️</div>
+            <h3 class="font-semibold text-navy mb-2">Incomplete intake means incomplete records</h3>
+            <p class="text-sm text-gray-500 leading-relaxed">When patient-reported data arrives as free text or a phone call, key fields — dechallenge, concomitant medications, outcome categories — are routinely missing.</p>
+          </div>
+          <div class="pain-card border border-gray-200 rounded-lg p-6 transition-colors">
+            <div class="text-2xl mb-3">🔗</div>
+            <h3 class="font-semibold text-navy mb-2">Patient-to-submission pipeline has no connective tissue</h3>
+            <p class="text-sm text-gray-500 leading-relaxed">Intake, coding, narrative drafting, and E2B submission happen in disconnected systems. Every handoff is a manual re-entry risk.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       THE PARADIGM
+  ═══════════════════════════════════════ -->
+  <section class="bg-slate-soft px-6 py-20" id="paradigm">
+    <div class="max-w-3xl mx-auto">
+
+      <p class="text-sm text-teal font-medium uppercase tracking-widest mb-3">How It Works</p>
+      <h2 class="text-3xl font-bold text-navy mb-4">A conversation that does the regulatory work for you.</h2>
+      <p class="text-gray-500 mb-14 max-w-2xl">
+        MurmurPV replaces a form with a conversation. The AI knows what the FDA needs — and asks for it in plain language, adapting to what the patient actually knows.
+      </p>
+
+      <div class="relative">
+        <!-- Connecting line -->
+        <div class="hidden md:block absolute left-[22px] top-8 bottom-8 w-px bg-teal opacity-30"></div>
+
+        <div class="flex flex-col gap-10">
+
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-11 h-11 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm z-10">1</div>
+            <div>
+              <h3 class="font-semibold text-navy mb-1">Patient starts a conversation — by voice or text</h3>
+              <p class="text-sm text-gray-500 leading-relaxed">No account required. No form to fill out. The AI asks plain-language questions about what happened: which drug, what symptoms, when, for how long. If the patient doesn't know an answer, that's recorded too — not a dead end.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-11 h-11 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm z-10">2</div>
+            <div>
+              <h3 class="font-semibold text-navy mb-1">The AI structures the record in real time</h3>
+              <p class="text-sm text-gray-500 leading-relaxed">While the patient talks, MurmurPV populates a structured record against the MedWatch 3500B schema — capturing concomitant medications, dechallenge timelines, and FDA outcome categories automatically. A deterministic completeness check catches any gaps and asks targeted follow-up questions before finalizing.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-11 h-11 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm z-10">3</div>
+            <div>
+              <h3 class="font-semibold text-navy mb-1">Patient reviews and approves</h3>
+              <p class="text-sm text-gray-500 leading-relaxed">Before anything is exported, the patient sees a plain-language summary of every captured field and can correct anything that's wrong. They control what gets exported and where it goes.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0 w-11 h-11 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm z-10">4</div>
+            <div>
+              <h3 class="font-semibold text-navy mb-1">Physician receives a regulation-ready record</h3>
+              <p class="text-sm text-gray-500 leading-relaxed">The output is a MedWatch 3500B PDF the patient can submit directly, plus a structured handoff JSON for downstream physician processing — MedDRA coding, narrative drafting, and E2B R3 submission. No re-entry. No translation layer.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       TRUST / ARCHITECTURE
+  ═══════════════════════════════════════ -->
+  <section class="bg-navy px-6 py-20" id="trust">
+    <div class="max-w-3xl mx-auto">
+
+      <p class="text-sm text-teal font-medium uppercase tracking-widest mb-3">Built for High-Stakes Data</p>
+      <h2 class="text-3xl font-bold text-white mb-4">Designed like a medical system, not a consumer app.</h2>
+      <p class="text-gray-400 mb-14 max-w-2xl">
+        Patient health data deserves infrastructure-level seriousness. MurmurPV is architected to meet it.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <div class="border border-white/10 rounded-lg p-6 bg-white/5">
+          <div class="text-teal mb-3">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3 class="font-semibold text-white mb-2">Ephemeral by default</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Nothing is stored on MurmurPV's servers without explicit patient consent. The session ends; the data stays with the patient. No persistent health records without a deliberate opt-in.</p>
+        </div>
+
+        <div class="border border-white/10 rounded-lg p-6 bg-white/5">
+          <div class="text-teal mb-3">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </div>
+          <h3 class="font-semibold text-white mb-2">Self-hostable within your VPC</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">For organizations with data sovereignty requirements — CROs, hospitals, trial sites — MurmurPV can run entirely within your own infrastructure. Your data never leaves your stack.</p>
+        </div>
+
+        <div class="border border-white/10 rounded-lg p-6 bg-white/5">
+          <div class="text-teal mb-3">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3 class="font-semibold text-white mb-2">Open-source patient intake (Apache 2.0)</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">The patient-facing intake tool is open source. Any organization can audit it, deploy it, or embed it without legal review friction. Transparency is the trust signal, not a logo.</p>
+        </div>
+
+        <div class="border border-white/10 rounded-lg p-6 bg-white/5">
+          <div class="text-teal mb-3">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3 class="font-semibold text-white mb-2">FDA-schema compliant output</h3>
+          <p class="text-sm text-gray-400 leading-relaxed">Every record is structured against the MedWatch 3500B schema. Outputs are designed to feed directly into downstream physician pipelines — MedDRA coding, ICSR generation, E2B R3 submission — without translation.</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       WHO IS THIS FOR — dual use callout
+  ═══════════════════════════════════════ -->
+  <section class="bg-white px-6 py-20 hairline" id="who">
+    <div class="max-w-3xl mx-auto">
+
+      <p class="text-sm text-teal font-medium uppercase tracking-widest mb-3">Who It's For</p>
+      <h2 class="text-3xl font-bold text-navy mb-12">One pipeline. Two sides of the same report.</h2>
+
+      <div class="grid md:grid-cols-2 gap-8">
+
+        <div class="border-l-4 border-teal pl-6">
+          <h3 class="text-xl font-bold text-navy mb-3">For Patients</h3>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            You experienced something after starting a new medication. You're not sure if it's related. You want to report it — but MedWatch is a wall of regulatory jargon.
+          </p>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            MurmurPV interviews you the way a knowledgeable friend would — in plain language, at your pace, by voice or text. It handles the structure. You handle the story.
+          </p>
+          <ul class="text-sm text-gray-500 space-y-2">
+            <li class="flex gap-2"><span class="text-teal font-bold">✓</span> Voice or text input</li>
+            <li class="flex gap-2"><span class="text-teal font-bold">✓</span> No medical jargon required</li>
+            <li class="flex gap-2"><span class="text-teal font-bold">✓</span> Your record, your control</li>
+            <li class="flex gap-2"><span class="text-teal font-bold">✓</span> MedWatch PDF ready to submit</li>
+          </ul>
+        </div>
+
+        <div class="border-l-4 border-navy pl-6">
+          <h3 class="text-xl font-bold text-navy mb-3">For Physicians & PV Teams</h3>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            Patient reports arrive as phone calls, emails, and free-text fragments. Before anything useful happens, someone has to translate them into structured data.
+          </p>
+          <p class="text-gray-500 text-sm leading-relaxed mb-4">
+            MurmurPV handles the intake. What reaches your team is a structured JSON record — dechallenge timelines, outcome categories, concomitant medications — ready for MedDRA coding and ICSR submission.
+          </p>
+          <ul class="text-sm text-gray-500 space-y-2">
+            <li class="flex gap-2"><span class="text-navy font-bold">✓</span> Structured handoff JSON, every report</li>
+            <li class="flex gap-2"><span class="text-navy font-bold">✓</span> FDA-schema compliant out of the box</li>
+            <li class="flex gap-2"><span class="text-navy font-bold">✓</span> Self-hostable within your VPC</li>
+            <li class="flex gap-2"><span class="text-navy font-bold">✓</span> Open for audit — Apache 2.0</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       FINAL CTA — WAITLIST
+  ═══════════════════════════════════════ -->
+  <section class="bg-slate-soft px-6 py-24" id="waitlist">
+    <div class="max-w-2xl mx-auto text-center">
+
+      <div class="flex justify-center mb-6">
+        <img src="assets/logo.png" alt="MurmurPV" class="h-16 w-auto" />
+      </div>
+
+      <h2 class="text-3xl md:text-4xl font-bold text-navy mb-4">
+        Be first in line for priority access.
+      </h2>
+      <p class="text-gray-500 mb-10 leading-relaxed">
+        MurmurPV is in active development. We're opening early access to patients, physicians, and PV teams who want to shape how it works. One email gets you on the list.
+      </p>
+
+      <form name="waitlist" method="POST" data-netlify="true" onsubmit="submitWaitlist(event, 'bottom')" class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+        <input type="hidden" name="form-name" value="waitlist" />
+        <input type="hidden" name="source" value="bottom" />
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="your@email.com"
+          class="flex-1 px-4 py-3 border border-gray-300 rounded bg-white text-navy placeholder-gray-400 text-sm"
+        />
+        <button
+          type="submit"
+          class="bg-navy hover:bg-navy-light text-white font-semibold px-6 py-3 rounded transition-colors whitespace-nowrap text-sm">
+          Request Early Access
+        </button>
+      </form>
+
+      <p id="bottom-confirm" class="hidden text-teal font-medium text-sm mt-4">You're on the list. We'll be in touch. ✓</p>
+      <p class="text-xs text-gray-400 mt-3">No spam. We'll reach out when early access opens.</p>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════ -->
+  <footer class="bg-white border-t border-gray-100 px-6 py-10">
+    <div class="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <img src="assets/logo.png" alt="MurmurPV" class="h-14 w-auto" />
+      <p class="text-gray-400 text-xs text-center">
+        © 2026 MurmurPV. Nothing on this site constitutes medical or legal advice.<br class="hidden md:block"/>
+        Patient intake tool is open source under the Apache 2.0 license.
+      </p>
+      <a href="mailto:hello@murmurpv.com" class="text-gray-400 hover:text-teal text-xs transition-colors">
+        hello@murmurpv.com
+      </a>
+    </div>
+  </footer>
+
+
+  <!-- ═══════════════════════════════════════
+       JS — Tab switching + form handling
+  ═══════════════════════════════════════ -->
+  <script>
+    // Audience tab toggle
+    function switchTab(tab) {
+      const tabs   = ['patient', 'physician'];
+      const panels = { patient: 'panel-patient', physician: 'panel-physician' };
+      tabs.forEach(t => {
+        const btn   = document.getElementById('tab-' + t);
+        const panel = document.getElementById(panels[t]);
+        if (t === tab) {
+          btn.classList.add('active');
+          panel.classList.remove('hidden');
+        } else {
+          btn.classList.remove('active');
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    // Waitlist form submission — posts to Netlify Forms
+    function submitWaitlist(e, source) {
+      e.preventDefault();
+      const form  = e.target;
+      const email = form.querySelector('input[type="email"]').value;
+
+      fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          'form-name': 'waitlist',
+          'email': email,
+          'source': source
+        }).toString()
+      })
+      .then(() => {
+        if (source === 'hero') {
+          document.getElementById('hero-form').style.display = 'none';
+          document.getElementById('thankyou').style.display  = 'block';
+        } else {
+          form.style.display = 'none';
+          document.getElementById('bottom-confirm').classList.remove('hidden');
+        }
+      })
+      .catch(() => {
+        // Fallback: still show thank-you even if fetch fails
+        if (source === 'hero') {
+          document.getElementById('hero-form').style.display = 'none';
+          document.getElementById('thankyou').style.display  = 'block';
+        } else {
+          form.style.display = 'none';
+          document.getElementById('bottom-confirm').classList.remove('hidden');
+        }
+      });
+    }
+
+    // Role selection in thank-you panel
+    function selectRole(role) {
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.classList.remove('border-teal', 'bg-slate-soft', 'font-semibold');
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+      });
+      event.target.classList.add('border-teal', 'bg-white', 'font-semibold');
+      event.target.style.opacity = '1';
+      document.getElementById('role-thanks').classList.remove('hidden');
+
+      // TODO: send role selection to your analytics or CRM
+      console.log('Role selected:', role);
+    }
+  </script>
+
+</body>
+</html>
