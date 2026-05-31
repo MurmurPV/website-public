@@ -95,9 +95,7 @@
 
       <!-- Waitlist form — hero -->
       <div id="hero-form">
-        <form name="waitlist" method="POST" data-netlify="true" onsubmit="submitWaitlist(event, 'hero')" class="flex flex-col sm:flex-row gap-3 max-w-lg">
-          <input type="hidden" name="form-name" value="waitlist" />
-          <input type="hidden" name="source" value="hero" />
+        <form id="form-hero" onsubmit="submitWaitlist(event, 'hero')" class="flex flex-col sm:flex-row gap-3 max-w-lg">
           <input
             type="email"
             name="email"
@@ -374,9 +372,7 @@
         MurmurPV is in active development. We're opening early access to patients, physicians, and PV teams who want to shape how it works. One email gets you on the list.
       </p>
 
-      <form name="waitlist" method="POST" data-netlify="true" onsubmit="submitWaitlist(event, 'bottom')" class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-        <input type="hidden" name="form-name" value="waitlist" />
-        <input type="hidden" name="source" value="bottom" />
+      <form id="form-bottom" onsubmit="submitWaitlist(event, 'bottom')" class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
         <input
           type="email"
           name="email"
@@ -436,39 +432,58 @@
       });
     }
 
-    // Waitlist form submission — posts to Netlify Forms
+    // Waitlist form submission — posts to Formspree via Ajax
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xojbzrpa';
+
+    function showSuccess(source, form) {
+      if (source === 'hero') {
+        document.getElementById('hero-form').style.display = 'none';
+        document.getElementById('thankyou').style.display  = 'block';
+      } else {
+        form.style.display = 'none';
+        document.getElementById('bottom-confirm').classList.remove('hidden');
+      }
+    }
+
+    function showError(source) {
+      const id = source === 'hero' ? 'form-hero' : 'form-bottom';
+      const existing = document.getElementById('fs-error-' + source);
+      if (!existing) {
+        const msg = document.createElement('p');
+        msg.id = 'fs-error-' + source;
+        msg.className = 'text-red-500 text-xs mt-2';
+        msg.textContent = 'Something went wrong — please try again or email us at hello@murmurpv.com';
+        document.getElementById(id).after(msg);
+      }
+    }
+
     function submitWaitlist(e, source) {
       e.preventDefault();
-      const form  = e.target;
-      const email = form.querySelector('input[type="email"]').value;
+      const form   = e.target;
+      const email  = form.querySelector('input[type="email"]').value;
+      const btn    = form.querySelector('button[type="submit"]');
 
-      fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          'form-name': 'waitlist',
-          'email': email,
-          'source': source
-        }).toString()
+      btn.disabled    = true;
+      btn.textContent = 'Sending…';
+
+      fetch(FORMSPREE_ENDPOINT, {
+        method:  'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, source })
       })
-      .then(() => {
-        if (source === 'hero') {
-          document.getElementById('hero-form').style.display = 'none';
-          document.getElementById('thankyou').style.display  = 'block';
+      .then(res => {
+        if (res.ok) {
+          showSuccess(source, form);
         } else {
-          form.style.display = 'none';
-          document.getElementById('bottom-confirm').classList.remove('hidden');
+          btn.disabled    = false;
+          btn.textContent = source === 'hero' ? 'Join the Priority Waitlist' : 'Request Early Access';
+          showError(source);
         }
       })
       .catch(() => {
-        // Fallback: still show thank-you even if fetch fails
-        if (source === 'hero') {
-          document.getElementById('hero-form').style.display = 'none';
-          document.getElementById('thankyou').style.display  = 'block';
-        } else {
-          form.style.display = 'none';
-          document.getElementById('bottom-confirm').classList.remove('hidden');
-        }
+        btn.disabled    = false;
+        btn.textContent = source === 'hero' ? 'Join the Priority Waitlist' : 'Request Early Access';
+        showError(source);
       });
     }
 
